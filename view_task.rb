@@ -32,6 +32,9 @@ print <<EOS
 <title>view_task</title>
 </head>
 <body>
+
+
+</script>
 <form action="http://cgi.u.tsukuba.ac.jp/~s1811433/local_only/wp/update_task.rb" method="post" >
 <h1>タスク管理</h1>
 <h2>#{task}</h2>
@@ -41,10 +44,21 @@ EOS
 
 task.each_with_index do |task, i|
   print <<EOS
-	 <p><input type="checkbox" name="done_task" value=#{task[0]}>#{task[1].chomp()}</p>
+	 <p><input type="radio" name="done_task" value=#{task[0]}>#{task[1].chomp()}</p>
    <p>#{task[2]} : since #{task[4]}</p>
 EOS
 end
+#ひとつはチェックしているようにしたい
+# if i == 0 then #最初のものにはcheckedをつける
+  # print<<EOS
+  # <p><input type="radio" name="done_task" value=#{task[0]} checked = "checked">#{task[1].chomp()}</p>
+  #  <p>#{task[2]} : since #{task[4]}</p>
+  # EOS
+# end
+  # print <<EOS
+  # <p><input type="radio" name="done_task" value=#{task[0]} >#{task[1].chomp()}</p>
+  # <p>#{task[2]} : since #{task[4]}</p>
+  # EOS
 
 #insert into User (name, experience_point) values("Naoto", 1);
 #insert into Tasks (subject,detail,howmany, insert_time, user_id) values("Study programming", "just do it, man.", 3, datetime('now', 'localtime'), 1);

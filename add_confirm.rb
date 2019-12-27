@@ -14,21 +14,23 @@ print cgi.header("text/html; charset=utf-8")
 db = SQLite3::Database.new("Indepedence.db")
 
 done_task = cgi["done_task"] #今のところ複数のタスクを同時に消化させる機能はついてない。ひとつづつ。
+subject = cgi["subject"]
+detail = cgi["detail"]
+howmany = cgi["howmany"]
+whatkind = cgi["whatkind"]
 p done_task
+
+#
+#insert into
 
 db.transaction(){
   #[[]]の形で取り出される
-  task_inquestion = db.execute("SELECT * FROM Sequence WHERE task_id = ?;", done_task).first
-  case task_inquestion[1]
-  when 0 then #毎日習慣.JST+9 hours + 24hours
-    db.execute("UPDATE Sequence SET next_time = datetime('now', '+33 hours'), num_th = ? WHERE task_id = ?;", (task_inquestion[3].to_i + 1).to_s, done_task)
-  when 1 then #毎週習慣JST + 9hours + 24*7hours. daysにはしづらい。
-    db.execute("UPDATE Sequence SET next_time = datetime('now', '+177 hours'), num_th = ? WHERE task_id = ?;", (task_inquestion[3].to_i + 1).to_s, done_task)
-  when 2 then #毎月習慣
-    db.execute("UPDATE Sequence SET next_time = datetime('now', '+1 months'), num_th = ? WHERE task_id = ?;", (task_inquestion[3].to_i + 1).to_s, done_task)
-  else #忘却曲線に沿った習慣
-    #未実装
-  end
+  # should make a change on the user_id. it should be changible
+  db.execute("INSERT INTO Tasks (subject,detail,howmany, insert_time, user_id) VALUES(?, ?, ?, datetime('now', 'localtime'), 1);", subject, detail, howmany)
+  #maybe we should get the task_id and specify it below.
+  db.execute("INSERT INTO Sequence(whatkind, next_time, num_th) VALUES(?, ?, 1);", whatkind, )
+  #db.execute("INSERT INTO Sequence(task_id,whatkind, next_time, num_th) VALUES(2, 1, "2020-01-01 12:00:00", 1);", subject, detail, howmany)
+
 
   new_task_inquestion = db.execute("SELECT * FROM Sequence WHERE task_id = ?;", done_task)
   new_task_inquestion = new_task_inquestion[0]
