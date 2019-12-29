@@ -5,11 +5,23 @@ require 'cgi'
 require 'cgi/session'
 cgi = CGI.new
 session = CGI::Session.new(cgi)
-session['user'] = (session['user'] || 1) #のちのちいじる必要ある。固有のユーザIDを付加したい。
+
 
 print cgi.header("text/html; charset=utf-8")
-db = SQLite3::Database.new("Indepedence.db")
+
 begin
+
+  db = SQLite3::Database.new("Indepedence.db")
+
+  if session['user'].nil? #ユーザ登録機能を付けたいが、PHPのようにPDOなど便利なものもなく、Railsも使っていないので簡易的なものにしてある。セキュリティ対策としてはあまり強くない。
+    #session記録がない場合、DBのUserに半ば強制的に登録をさせて固有のユーザIDを登録し、後でユーザ名を好みで変えてもらう仕組み。
+    db.transaction(){
+      db.execute("INSERT INTO User (name, experience_point) VALUES(\"SOMEONE\", 0);")
+      session['user'] = db.execute("SELECT user_id FROM User where rowid = last_insert_rowid();").first.first
+    }
+  else
+    session['user'] = session['user']
+  end
 
 print <<EOF
 <html>

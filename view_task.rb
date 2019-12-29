@@ -8,22 +8,31 @@ session = CGI::Session.new(cgi)
 
 begin
 
-session['user'] = (session['user'] || 1) #のちのちいじる必要ある。固有のユーザIDを付加したい。
 print cgi.header("text/html; charset=utf-8")
 db = SQLite3::Database.new("Indepedence.db")
 
+
+if session['user'].nil? #ユーザ登録機能を付けたいが、PHPのようにPDOなど便利なものもなく、Railsも使っていないので簡易的なものにしてある。セキュリティ対策としてはあまり強くない。
+  #session記録がない場合、DBのUserに半ば強制的に登録をさせて固有のユーザIDを付加し、後でユーザ名を好みで変えてもらう仕組み。
+  db.transaction(){
+    db.execute("INSERT INTO User (name, experience_point) VALUES(\"SOMEONE\", 0);")
+    session['user'] = db.execute("SELECT user_id FROM User where rowid = last_insert_rowid();").first.first
+  }
+else
+  session['user'] = session['user']
+end
 
 task =[]
 user = []
 
 db.transaction(){
-  task = db.execute("SELECT * FROM Tasks;")
-  user = db.execute("SELECT * FROM User where user_id = ? ;", session['user'])
+  task = db.execute("SELECT * FROM Tasks WHERE user_id = ?;", session['user'])
+  user = db.execute("SELECT * FROM User WHERE user_id = ? ;", session['user'])
 }
 if user.length != 1 then
   print("Something went wrong.\n please try again.\n") #もうちょっとエラー処理頑張る
 else
-  user = user[0]
+  user = user.first
 end
 print <<EOS
 <html>
@@ -40,6 +49,7 @@ print <<EOS
 <h2>#{task}</h2>
 <h2>#{user}</h2>
 choose one if you finish the task
+#{session['user']}
 EOS
 
 task.each_with_index do |task, i|
@@ -48,17 +58,6 @@ task.each_with_index do |task, i|
    <p>#{task[2]} : since #{task[4]}</p>
 EOS
 end
-#ひとつはチェックしているようにしたい
-# if i == 0 then #最初のものにはcheckedをつける
-  # print<<EOS
-  # <p><input type="radio" name="done_task" value=#{task[0]} checked = "checked">#{task[1].chomp()}</p>
-  #  <p>#{task[2]} : since #{task[4]}</p>
-  # EOS
-# end
-  # print <<EOS
-  # <p><input type="radio" name="done_task" value=#{task[0]} >#{task[1].chomp()}</p>
-  # <p>#{task[2]} : since #{task[4]}</p>
-  # EOS
 
 #insert into User (name, experience_point) values("Naoto", 1);
 #insert into Tasks (subject,detail,howmany, insert_time, user_id) values("Study programming", "just do it, man.", 3, datetime('now', 'localtime'), 1);
@@ -81,3 +80,4 @@ rescue => ex
   puts ex.message
   puts ex.backtrace
 end
+#構造を見やすくするためにあえてCSSは用いておらず、素材本来の出来で勝負します。
