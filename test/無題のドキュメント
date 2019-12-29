@@ -1,0 +1,4 @@
+diff | sort sample3-1.txt | uniq -c | awk '{print $2" = "$1}' > a | ruby report3-1.rb > b
+diff: missing operand after 'diff'
+diff: Try 'diff --help' for more information.
+

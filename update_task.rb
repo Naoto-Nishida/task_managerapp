@@ -3,6 +3,7 @@
 require 'sqlite3'
 require 'cgi'
 require 'cgi/session'
+require "cgi/escape"
 cgi = CGI.new
 session = CGI::Session.new(cgi)
 
@@ -23,16 +24,19 @@ else
   session['user'] = session['user']
 end
 
+#行ったタスクのtask_idを格納.view_task.rbからデータが渡ってくる
 done_task = CGI.escapeHTML(cgi["done_task"])
 
+#該当するtask_idのSequenceの内容を書き換えるための変数
 task_inquestion = []
+#画面表示用に保持するDBのデータ
 new_task = []
 new_task_sequence = []
 
-db.transaction(){
+db.transaction(){ #view_task.rbから渡ってきた情報を元にSequenceの内容を書き換える。
   #[[]]の形で取り出される. Sequence:{task_id, whatkind, next_time, num_th}
   task_inquestion = db.execute("SELECT * FROM Sequence WHERE task_id = ?;", done_task).first
-  case task_inquestion[1]
+  case task_inquestion[1] #whatkind
   when 0 then #毎日習慣.JST+9 hours + 24hours
     db.execute("UPDATE Sequence SET next_time = datetime('now', '+33 hours'), num_th = ? WHERE task_id = ?;", (task_inquestion[3] + 1).to_s, done_task)
   when 1 then #毎週習慣JST + 9hours + 24*7hours. daysにはしづらい。
@@ -40,7 +44,7 @@ db.transaction(){
   when 2 then #毎月習慣
     db.execute("UPDATE Sequence SET next_time = datetime('now', '+1 months'), num_th = ? WHERE task_id = ?;", (task_inquestion[3] + 1).to_s, done_task)
   else #忘却曲線に沿った習慣
-    case task_inquestion[3] #datetime関数の時間シフトのオプションがプレイスホルダーに対応してないっぽいので。。。
+    case task_inquestion[3] #num_th。 datetime関数の時間シフトのオプションがプレイスホルダーに対応してないっぽいのでキモい実装になっている。
     when 1 then
       db.execute("UPDATE Sequence SET next_time = datetime('now', '+3 days'), num_th = ? WHERE task_id = ?;", (task_inquestion[3] + 1).to_s, done_task)
     when 2 then
@@ -66,7 +70,7 @@ db.transaction(){
 
 #if the reccursion time of the task reaches its goal
 if new_task[3] <= new_task_sequence[3]
-  db.transaction(){
+  db.transaction(){ #タスク終了をDBに入力し、Sequenceからの値で経験値を付与する。
     db.execute("UPDATE Tasks SET done = 1 WHERE task_id = ?;", done_task)
     tmp_exp = db.execute("SELECT experience_point FROM User WHERE user_id = ?", session['user']).first.first
     db.execute("UPDATE User SET experience_point = ? WHERE user_id = ?", tmp_exp + new_task[3]*10, session['user']) #反復回数分*10のポイントがつく

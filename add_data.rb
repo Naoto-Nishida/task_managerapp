@@ -34,7 +34,7 @@ print <<EOF
 <script type="text/javascript">
 function Task(){
 
-  this.precheck = function(obj){
+  this.precheck = function(obj){ #不正な値が入っているかチェックする。
 
     var ret = true;
     var subject = obj.subject.value;
@@ -82,7 +82,7 @@ task = new Task();
 
 </script>
 
-
+#subject, detail, howmany, habitual cycleを入力させてadd_confirm.rbに送る。
 <form action="http://cgi.u.tsukuba.ac.jp/~s1811433/local_only/wp/add_confirm.rb" method="post" onsubmit = "return task.precheck(this)">
 	<p>subject(less than 30 characters)： <input type="text" name="subject"></p>
   <p>detail(less than 140 characters)： <input type="text" name="detail"></p>

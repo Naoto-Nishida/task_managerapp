@@ -1,0 +1,80 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+</head>
+<body>
+<script type="text/javascript">
+  function Janken() { // Jankenオブジェクトの定義
+    // プロパティ
+    this.win = 0;	// 勝ち
+    this.lose = 0;	// 負け
+    this.draw = 0;	// 引き分け
+    this.hand = ['グー', 'チョキ', 'パー'];
+
+    // メソッド定義
+    // 勝敗判定メソッド
+    this.judge = function(obj){
+      var hand_h, hand_c, msg;
+      // 人の手を取得
+      for(i=0; i<obj.hand.length; i++){
+	if (obj.hand[i].checked == true) {
+	  hand_h = i;
+	  break;
+	}
+      }
+      // コンピュータの手を生成(0,1,2の中の整数)
+      // Math.floor() は小数点以下を切り捨てる
+      // Math.random() は0から1未満の少数値を生成
+      hand_c = Math.floor(Math.random() * 3);
+      // 勝敗判定（前回の資料を参照）
+      switch(hand_h - hand_c) {
+	case 0:
+	  this.draw++;
+	  msg = "引き分け!";
+	  break;
+	case 1:
+	case -2:
+	  this.lose++;
+	  msg = "あなたの負け!";
+	  break;
+	case -1:
+	case 2:
+	  this.win++;
+	  msg = "あなたの勝ち!";
+	  break;
+	default:
+	  msg = "Error!";
+      }
+      // 勝負の結果を警告ダイアログに表示
+      alert(msg + "\n\nあなた=" + this.hand[hand_h] + "\nコンピュータ=" + this.hand[hand_c]);
+      this.print(document.getElementById('result'));
+    }
+
+    // 結果表示メソッド
+    this.print = function(element){
+      element.innerHTML = this.win+"勝"+this.lose+"敗"+this.draw+"分";
+    }
+
+    // 勝敗リセットメソッド
+    this.reset = function(){
+      this.win = 0;
+      this.lose = 0;
+      this.draw = 0;
+      this.print(document.getElementById('result'));
+    }
+  }
+				  janken = new Janken();  //
+				  console.log("Hello");
+</script>
+<h1>JavaScript を使ったジャンケン</h1>
+現在の勝敗：<span id="result">0勝0敗0分</span>
+<form>
+  <input type="radio" name="hand" value="0" checked="checked">グー
+  <input type="radio" name="hand" value="1">チョキ
+  <input type="radio" name="hand" value="2">パー
+  <input type="button" value="勝負！" onclick="janken.judge(this.form)">
+  <br>
+  <input type="button" value="勝敗をリセット" onclick="janken.reset()">
+</form>
+</body>
+</html>

@@ -3,6 +3,7 @@
 require 'sqlite3'
 require 'cgi'
 require 'cgi/session'
+require "cgi/escape"
 cgi = CGI.new
 session = CGI::Session.new(cgi)
 
@@ -23,16 +24,15 @@ else
   session['user'] = session['user']
 end
 
+#change_userinfo.rbからデータが渡ってくる
 username = CGI.escapeHTML(cgi["username"]) #インジェクション対策
 
 
 user_inquestion = []
 
-db.transaction(){
+db.transaction(){ #ユーザ名の変更をDBに書き込む。
   #[[]]の形で取り出される. #User: {user_id, name, experience_point}
-  #user_inquestion = db.execute("SELECT * FROM User WHERE user_id = ?;", session['user']).first
   db.execute("UPDATE User SET name = ? WHERE user_id = ?;", username, session['user'])
-
 }
 
 print <<EOF

@@ -34,16 +34,13 @@ print <<EOF
 <script type="text/javascript">
 function Task(){
 
-  this.precheck = function(obj){
+  this.precheck = function(obj){ #Submit時の不正な値を検査する用のメソッド。
 
     var ret = true;
     var username = obj.username.value;
     var regObj_htmltag = /<("[^"]*"|'[^']*'|[^'">])*>/;//new RegExp("<("[^"]*"|'[^']*'|[^'">])*>");
     var result_username = username.match(regObj_htmltag);
 
-
-    //console.log("obj");
-    //console.log(obj);
 
     if(obj.username.value.length == 0){
       alert("input the name");

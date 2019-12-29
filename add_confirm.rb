@@ -25,7 +25,7 @@ else
   session['user'] = session['user']
 end
 
-
+#add_data.rbからデータが渡ってくる
 subject = CGI.escapeHTML(cgi["subject"]) #エスケープ処理でインジェクション対策
 detail = CGI.escapeHTML(cgi["detail"])
 howmany = CGI.escapeHTML(cgi["howmany"])
@@ -37,7 +37,7 @@ whatkind = CGI.escapeHTML(cgi["whatkind"])
 new_task = []
 new_task_sequence = []
 
-db.transaction(){
+db.transaction(){ #add_data.rbから渡ってきたデータを元に、DBにTasksおよびSequenceのデータを作成。
   #select : [[]]の形で取り出される
   # should make a change on the user_id. it should be changible
   db.execute("INSERT INTO Tasks (subject,detail,howmany, insert_time, user_id) VALUES(?, ?, ?, datetime('now', 'localtime'), ?);", subject, detail, howmany, session['user'])
@@ -53,8 +53,6 @@ db.transaction(){
   else #forgetting curve
     db.execute("INSERT INTO Sequence(task_id,whatkind, next_time, num_th) VALUES(?, ?, datetime('now', '+1 days'), 1);",task_id, whatkind)
   end
-  #db.execute("INSERT INTO Sequence(task_id,whatkind, next_time, num_th) VALUES(2, 1, "2020-01-01 12:00:00", 1);", subject, detail, howmany)
-
 
   new_task = db.execute("SELECT * FROM Tasks WHERE task_id = ?;", task_id).first
   new_task_sequence = db.execute("SELECT * FROM Sequence WHERE task_id = ?;", task_id).first

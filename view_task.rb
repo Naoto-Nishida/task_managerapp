@@ -28,7 +28,7 @@ end
 task =[]
 user = []
 
-db.transaction(){
+db.transaction(){#ユーザ情報とそれに紐付けられてるタスクのデータを取り出す。
   #ログインしているユーザIDで、終わっていないタスクで、今日やるべきものを抽出する。
   task = db.execute("SELECT * FROM Tasks INNER JOIN Sequence ON Tasks.task_id = Sequence.task_id WHERE Tasks.user_id = ? AND Tasks.done = 0 AND date(Sequence.next_time) = date('now', 'localtime');", session['user'])
   #ユーザ情報の取り出し
@@ -60,10 +60,6 @@ task.each_with_index do |task, i|
 
 EOS
 end
-
-#insert into User (name, experience_point) values("Naoto", 1);
-#insert into Tasks (subject,detail,howmany, insert_time, user_id) values("Study programming", "just do it, man.", 3, datetime('now', 'localtime'), 1);
-#insert into Sequence(task_id,whatkind, next_time, num_th) values(2, 1, "2020-01-01 12:00:00", 1);
 
 
 print <<EOS
