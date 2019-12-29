@@ -3,6 +3,7 @@
 require 'sqlite3'
 require 'cgi'
 require 'cgi/session'
+require "cgi/escape"
 cgi = CGI.new
 session = CGI::Session.new(cgi)
 
@@ -13,8 +14,9 @@ print cgi.header("text/html; charset=utf-8")
 
 db = SQLite3::Database.new("Indepedence.db")
 
-if session['user'].nil? #ユーザ登録機能を付けたいが、PHPのようにPDOなど便利なものもなく、Railsも使っていないので簡易的なものにしてある。セキュリティ対策としてはあまり強くない。
-  #session記録がない場合、DBのUserに半ば強制的に登録をさせて固有のユーザIDを登録し、後でユーザ名を好みで変えてもらう仕組み。
+if session['user'].nil? or (!session['user'].integer?)#ユーザ登録機能を付けたいが、PHPのようにPDOなど便利なものもなく、Railsも使っていないので簡易的なものにしてある。
+  #session記録がない場合、DBのUserに半ば強制的に登録をさせて固有のユーザIDを付加し、後でユーザ名を好みで変えてもらう仕組み。
+  #簡易的にインジェクションに対してのセキュリティ機能も実装してある。sessionの値に不正な値を入れてインジェクションしようとしてもこの節で整数に書き換えられるしくみ。
   db.transaction(){
     db.execute("INSERT INTO User (name, experience_point) VALUES(\"SOMEONE\", 0);")
     session['user'] = db.execute("SELECT user_id FROM User where rowid = last_insert_rowid();").first.first
@@ -23,15 +25,17 @@ else
   session['user'] = session['user']
 end
 
-done_task = cgi["done_task"] #今のところ複数のタスクを同時に消化させる機能はついてない。ひとつづつ。
-subject = cgi["subject"]
-detail = cgi["detail"]
-howmany = cgi["howmany"]
-whatkind = cgi["whatkind"]
-p done_task
+
+subject = CGI.escapeHTML(cgi["subject"]) #エスケープ処理でインジェクション対策
+detail = CGI.escapeHTML(cgi["detail"])
+howmany = CGI.escapeHTML(cgi["howmany"])
+whatkind = CGI.escapeHTML(cgi["whatkind"])
+#この辺参考に
+#https://qiita.com/scivola/items/b2d749a5a720f9eb02b1
 
 
-new_task_inquestion = []
+new_task = []
+new_task_sequence = []
 
 db.transaction(){
   #select : [[]]の形で取り出される
@@ -52,8 +56,8 @@ db.transaction(){
   #db.execute("INSERT INTO Sequence(task_id,whatkind, next_time, num_th) VALUES(2, 1, "2020-01-01 12:00:00", 1);", subject, detail, howmany)
 
 
-  new_task_inquestion = db.execute("SELECT * FROM Sequence WHERE task_id = ?;", done_task)
-  new_task_inquestion = new_task_inquestion[0]
+  new_task = db.execute("SELECT * FROM Tasks WHERE task_id = ?;", task_id).first
+  new_task_sequence = db.execute("SELECT * FROM Sequence WHERE task_id = ?;", task_id).first
 }
 
 print <<EOF
@@ -67,7 +71,11 @@ thanks.<br>
 <br>
 Your task has been updated.<br>
 <br>
-#{new_task_inquestion}
+-----------------------<br>
+#{new_task[1]}<br>
+#{new_task[2]}<br>
+NEXT TIME : #{new_task_sequence[2].slice(0,11)}<br>
+-----------------------<br>
 <br>
 <br>
 <a href= "http://cgi.u.tsukuba.ac.jp/~s1811433/local_only/wp/view_task.rb" >View tasks</a>

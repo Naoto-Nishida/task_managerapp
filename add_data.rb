@@ -13,8 +13,9 @@ begin
 
   db = SQLite3::Database.new("Indepedence.db")
 
-  if session['user'].nil? #ユーザ登録機能を付けたいが、PHPのようにPDOなど便利なものもなく、Railsも使っていないので簡易的なものにしてある。セキュリティ対策としてはあまり強くない。
-    #session記録がない場合、DBのUserに半ば強制的に登録をさせて固有のユーザIDを登録し、後でユーザ名を好みで変えてもらう仕組み。
+  if session['user'].nil? or (!session['user'].integer?)#ユーザ登録機能を付けたいが、PHPのようにPDOなど便利なものもなく、Railsも使っていないので簡易的なものにしてある。
+    #session記録がない場合、DBのUserに半ば強制的に登録をさせて固有のユーザIDを付加し、後でユーザ名を好みで変えてもらう仕組み。
+    #簡易的にインジェクションに対してのセキュリティ機能も実装してある。sessionの値に不正な値を入れてインジェクションしようとしてもこの節で整数に書き換えられるしくみ。
     db.transaction(){
       db.execute("INSERT INTO User (name, experience_point) VALUES(\"SOMEONE\", 0);")
       session['user'] = db.execute("SELECT user_id FROM User where rowid = last_insert_rowid();").first.first
@@ -48,12 +49,12 @@ function Task(){
     //console.log("obj");
     //console.log(obj);
 
-    if(obj.subject.value.length == 0 || obj.detail.value.length == 0 || obj.howmany.value.length == 0){
+    if(subject.length == 0 || detail.length == 0 || howmany.length == 0){
       alert("input the name of the task, the detail, and the times of reccursion");
       ret = false;
     }
 
-    if(obj.subject.value.length > 30 || obj.detail.value.length >140 ){
+    if(subject.length > 30 || detail.length >140 ){
       alert("characters must be in the specified length!");
       ret = false;
     }
@@ -65,6 +66,11 @@ function Task(){
 
     if(result_subject != null || result_detail != null){
       alert("HTMLにタグは使えません");
+      ret = false;
+    }
+
+    if(perseInt(howmany) < 0 ){
+      alert("繰り返しに負の数は使えません");
       ret = false;
     }
 
@@ -85,6 +91,8 @@ task = new Task();
 	<p><input type="submit" value="Submit!" ></p>
 	<p><input type="reset" value="reset" ></p>
 </form>
+<br>
+<p6>when you choose ebbinghaus forgetting curve option, there is no reccursion time of more than 7.</p6>
 <br>
 EOF
 #when input numbers, radio input should be used. but this time we used text input for the validation problem.
